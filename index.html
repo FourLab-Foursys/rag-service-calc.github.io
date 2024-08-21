@@ -4,43 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estimativa de Custos</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { margin: 20px; }
         .card { margin-bottom: 20px; }
         .result { margin-top: 20px; font-weight: bold; }
     </style>
+    
 </head>
 <body>
     <div class="container">
         <h1 class="mb-4">Estimativa de Custos</h1>
         <form id="costForm">
+            <!-- GPT Model Card -->
             <div class="card">
                 <div class="card-header">
-                    Modelo GPT
+                    <h5>Modelo GPT 
+                      <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Perguntas Simples: Aproximadamente 10-50 tokens por pergunta/resposta.&#10;Perguntas Moderadas: Aproximadamente 50-150 tokens por pergunta/resposta.&#10;Perguntas Complexas: Aproximadamente 150-500 tokens por pergunta/resposta."></i>
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="form-group">
-                        <label for="gptModel">Modelo GPT:</label>
-                        <select id="gptModel" class="form-control">
-                            <option value="2.5:0">gpt-4o-2024-08-06 ($2.50 / 1M input tokens)</option>
-                            <option value="1.25:0">gpt-4o-2024-08-06 ($1.25 / 1M input tokens)</option>
-                            <option value="0:10">gpt-4o-2024-08-06 ($10.00 / 1M output tokens)</option>
-                            <option value="0:5">gpt-4o-2024-08-06 ($5.00 / 1M output tokens)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="inputTokens">Tokens de Entrada (em milhões):</label>
-                        <input type="number" id="inputTokens" class="form-control" value="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="outputTokens">Tokens de Saída (em milhões):</label>
-                        <input type="number" id="outputTokens" class="form-control" value="1">
-                    </div>
-                    <div class="result" id="gptCost"></div>
+                  <div class="form-group">
+                    <label for="gptModel">Modelo GPT:</label>
+                    <select id="gptModel" class="form-control">
+                      <option value="2.5:0">gpt-4o-2024-08-06 ($2.50 / 1M input tokens)</option>
+                      <option value="1.25:0">gpt-4o-2024-08-06 ($1.25 / 1M input tokens)</option>
+                      <option value="0:10">gpt-4o-2024-08-06 ($10.00 / 1M output tokens)</option>
+                      <option value="0:5">gpt-4o-2024-08-06 ($5.00 / 1M output tokens)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="inputTokens">Tokens de Entrada (em milhões):</label>
+                    <input type="number" id="inputTokens" class="form-control" value="1">
+                  </div>
+                  <div class="form-group">
+                    <label for="outputTokens">Tokens de Saída (em milhões):</label>
+                    <input type="number" id="outputTokens" class="form-control" value="1">
+                  </div>
+                  <div class="result" id="gptCost"></div>
                 </div>
             </div>
 
+            <!-- Embedding Model Card -->
             <div class="card">
                 <div class="card-header">
                     Modelo de Embedding
@@ -65,9 +70,10 @@
                 </div>
             </div>
 
+            <!-- App Service Container -->
             <div id="appServiceContainer">
                 <div class="card" id="appServiceTemplate" style="display: none;">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         Serviço de Aplicativo
                         <button type="button" class="close" onclick="removeAppService(this)">&times;</button>
                     </div>
@@ -75,12 +81,22 @@
                         <div class="form-group">
                             <label>Tipo de Serviço de Aplicativo:</label>
                             <select class="form-control appServiceType">
-                                <option value="0.09">Premium v3 P0V3 (62.05 USD por hora)</option>
+                                <option value="0.09">Premium v3 P0V3 (0.09 USD por hora)</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Total de Horas por Serviço de Aplicativo:</label>
                             <input type="number" class="form-control hours" value="730">
+                        </div>
+                        <div class="form-group">
+                            <label>Plano de Pagamento:</label>
+                            <select class="form-control paymentPlan">
+                                <option value="1">Pay as you go</option>
+                                <option value="0.75">1 year savings plan (~25% discount)</option>
+                                <option value="0.55">3 year savings plan (~45% discount)</option>
+                                <option value="0.65">1 year reserved (~35% discount)</option>
+                                <option value="0.45">3 year reserved (~55% discount)</option>
+                            </select>
                         </div>
                         <div class="result serviceCost"></div>
                     </div>
@@ -89,6 +105,7 @@
 
             <button type="button" class="btn btn-secondary mb-3" onclick="addAppService()">Adicionar Serviço de Aplicativo</button>
 
+            <!-- Pinecone Platform Card -->
             <div class="card">
                 <div class="card-header">
                     Plataforma Pinecone
@@ -131,6 +148,7 @@
             const template = document.getElementById('appServiceTemplate');
             const clone = template.cloneNode(true);
             clone.style.display = 'block';
+            clone.removeAttribute('id'); // Remove the id attribute
             document.getElementById('appServiceContainer').appendChild(clone);
         }
 
@@ -160,11 +178,12 @@
 
             // App Service Cost Calculation
             let totalServiceCost = 0;
-            const serviceCards = document.querySelectorAll('#appServiceContainer .card');
+            const serviceCards = document.querySelectorAll('#appServiceContainer .card:not(#appServiceTemplate)');
             serviceCards.forEach(card => {
                 const serviceTypeCost = parseFloat(card.querySelector('.appServiceType').value);
                 const hours = parseInt(card.querySelector('.hours').value);
-                const serviceCost = serviceTypeCost * hours;
+                const paymentPlanDiscount = parseFloat(card.querySelector('.paymentPlan').value);
+                const serviceCost = serviceTypeCost * hours * paymentPlanDiscount;
                 totalServiceCost += serviceCost;
                 card.querySelector('.serviceCost').innerText = `Custo Serviço de Aplicativo: $${serviceCost.toFixed(2)} USD`;
             });
@@ -185,10 +204,85 @@
             // Total Cost Calculation
             const totalCost = totalGptCost + totalEmbeddingCost + totalServiceCost + totalPineconeCost;
             document.getElementById('totalCost').innerText = `Custo Total: $${totalCost.toFixed(2)} USD`;
+            generateMarkdown();
         }
+
+        function generateMarkdown() {
+            const gptModel = document.getElementById('gptModel').selectedOptions[0].text;
+            const inputTokens = document.getElementById('inputTokens').value;
+            const outputTokens = document.getElementById('outputTokens').value;
+            const gptCost = document.getElementById('gptCost').innerText.split(': ')[1];
+
+            const embeddingModel = document.getElementById('embeddingModel').selectedOptions[0].text;
+            const embeddingTokens = document.getElementById('embeddingTokens').value;
+            const embeddingCost = document.getElementById('embeddingCost').innerText.split(': ')[1];
+
+            const serviceCards = document.querySelectorAll('#appServiceContainer .card:not(#appServiceTemplate)');
+            let serviceCosts = '';
+            serviceCards.forEach((card, index) => {
+                const serviceType = card.querySelector('.appServiceType').selectedOptions[0].text;
+                const hours = card.querySelector('.hours').value;
+                const paymentPlan = card.querySelector('.paymentPlan').selectedOptions[0].text;
+                const serviceCost = card.querySelector('.serviceCost').innerText.split(': ')[1];
+                serviceCosts += `### Serviço de Aplicativo ${index + 1}\n- Tipo: ${serviceType}\n- Horas: ${hours}\n- Plano de Pagamento: ${paymentPlan}\n- Custo: ${serviceCost}\n\n`;
+            });
+
+            const pineconePlatform = document.getElementById('pineconePlatform').selectedOptions[0].text;
+            const pineconeStorage = document.getElementById('pineconeStorage').value;
+            const pineconeReadUnits = document.getElementById('pineconeReadUnits').value;
+            const pineconeWriteUnits = document.getElementById('pineconeWriteUnits').value;
+            const pineconeCost = document.getElementById('pineconeCost').innerText.split(': ')[1];
+
+            const totalCost = document.getElementById('totalCost').innerText.split(': ')[1];
+
+            const markdownContent = `
+# Estimativa de Custos
+
+## Modelo GPT
+- Modelo: ${gptModel}
+- Tokens de Entrada: ${inputTokens} milhões
+- Tokens de Saída: ${outputTokens} milhões
+- Custo: ${gptCost}
+
+## Modelo de Embedding
+- Modelo: ${embeddingModel}
+- Tokens de Embedding: ${embeddingTokens} milhões
+- Custo: ${embeddingCost}
+
+${serviceCosts}
+
+## Plataforma Pinecone
+- Plataforma: ${pineconePlatform}
+- Armazenamento: ${pineconeStorage} GB
+- Unidades de Leitura: ${pineconeReadUnits} milhões
+- Unidades de Escrita: ${pineconeWriteUnits} milhões
+- Custo: ${pineconeCost}
+
+## Custo Total
+- ${totalCost}
+`;
+
+            const blob = new Blob([markdownContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'estimativa_de_custos.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+
+    $(document).ready(function(){
+      $('[data-toggle="tooltip"]').tooltip();   
+    });
+
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+   
+
 </body>
 </html>
