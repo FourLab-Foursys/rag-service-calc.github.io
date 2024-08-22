@@ -21,7 +21,7 @@
 <body>
     <div class="container">
         <h1 class="mb-4">Estimativa de Custos</h1>
-        <div class="result total-cost" id="totalCost">Custo Total: $0.00 USD</div>
+        <div class="result total-cost" id="totalCost">Custo mensal: $0.00 USD</div>
         <form id="costForm">
             <div id="cardsContainer">
                 <!-- GPT Model Card -->
@@ -32,6 +32,10 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                      <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="gptCheckbox" onchange="calculateCost()" checked>
+                        <label class="form-check-label" for="gptCheckbox">Incluir no cálculo</label>
+                      </div>
                       <div class="form-group">
                         <label for="gptModel">Modelo GPT:</label>
                         <select id="gptModel" class="form-control" onchange="calculateCost()">
@@ -53,39 +57,59 @@
                     </div>
                 </div>
 
-                <!-- Embedding Model Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-vector-square"></i> Modelo de Embedding</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-group">
-                            <label for="embeddingModel">Modelo de Embedding:</label>
-                            <select id="embeddingModel" class="form-control" onchange="calculateCost()">
-                                <option value="0.02">text-embedding-3-small ($0.020 / 1M tokens)</option>
-                                <option value="0.01">text-embedding-3-small ($0.010 / 1M tokens com Batch API)</option>
-                                <option value="0.13">text-embedding-3-large ($0.130 / 1M tokens)</option>
-                                <option value="0.065">text-embedding-3-large ($0.065 / 1M tokens com Batch API)</option>
-                                <option value="0.1">ada v2 ($0.100 / 1M tokens)</option>
-                                <option value="0.05">ada v2 ($0.050 / 1M tokens com Batch API)</option>
-                            </select>
+                <!-- Embedding Container-->
+                <div id="modelEmbeddingContainer">
+                    <!-- Embedding Model Card -->
+                    <div class="card modelEmbeddingCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-vector-square"></i> Modelo de Embedding</h5>
+                            <div class="ml-auto d-flex">
+                                <button type="button" class="close mr-2" onclick="removeEmbedding(this)">&times;</button>
+                                <button type="button" class="add" onclick="addCard('modelEmbeddingContainer')">+</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="embeddingTokens">Tokens de Embedding (em milhões):</label>
-                            <input type="number" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input"  onchange="calculateCost()" checked>
+                                <label class="form-check-label" >Incluir no cálculo</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="embeddingModel">Modelo de Embedding:</label>
+                                <select id="embeddingModel" class="form-control" onchange="calculateCost()">
+                                    <option value="0.02">text-embedding-3-small ($0.020 / 1M tokens)</option>
+                                    <option value="0.01">text-embedding-3-small ($0.010 / 1M tokens com Batch API)</option>
+                                    <option value="0.13">text-embedding-3-large ($0.130 / 1M tokens)</option>
+                                    <option value="0.065">text-embedding-3-large ($0.065 / 1M tokens com Batch API)</option>
+                                    <option value="0.1">ada v2 ($0.100 / 1M tokens)</option>
+                                    <option value="0.05">ada v2 ($0.050 / 1M tokens com Batch API)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="embeddingTokens">Tokens de Embedding (em milhões):</label>
+                                <input type="number" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()">
+                            </div>
+                            <div class="result embeddingCost" ></div>
                         </div>
-                        <div class="result" id="embeddingCost"></div>
                     </div>
                 </div>
 
                 <!-- App Service Container -->
                 <div id="appServiceContainer">
-                    <div class="card" id="appServiceTemplate" style="display: none;">
+                    <!-- Default App Service Card -->
+                    <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-server"></i> Serviço de Aplicativo</h5>
-                            <button type="button" class="close" onclick="removeAppService(this)">&times;</button>
+                            <div class="ml-auto d-flex">
+                                <button type="button" class="close mr-2" onclick="removeAppService(this)">&times;</button>
+                                <button type="button" class="add" onclick="addCard('appServiceContainer')">+</button>
+                            </div>
                         </div>
+                        
                         <div class="card-body">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" onchange="calculateCost()" checked>
+                                <label class="form-check-label">Incluir no cálculo</label>
+                            </div>
                             <div class="form-group">
                                 <label>Tipo de Serviço de Aplicativo:</label>
                                 <select class="form-control appServiceType" onchange="calculateCost()">
@@ -110,15 +134,16 @@
                         </div>
                     </div>
                 </div>
-
-                <button type="button" class="btn btn-secondary mb-3" onclick="addAppService()">Adicionar Serviço de Aplicativo</button>
-
                 <!-- Pinecone Platform Card -->
                 <div class="card">
                     <div class="card-header">
                         <h5><i class="fas fa-database"></i> Plataforma Pinecone</h5>
                     </div>
                     <div class="card-body">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="pineconeCheckbox" onchange="calculateCost()" checked>
+                            <label class="form-check-label" for="pineconeCheckbox">Incluir no cálculo</label>
+                        </div>
                         <div class="form-group">
                             <label for="pineconePlatform">Plataforma Pinecone:</label>
                             <select id="pineconePlatform" class="form-control" onchange="calculateCost()">
@@ -151,6 +176,10 @@
                         <h5><i class="fas fa-database"></i> Banco de Dados</h5>
                     </div>
                     <div class="card-body">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="databaseCheckbox" onchange="calculateCost()" checked>
+                            <label class="form-check-label" for="databaseCheckbox">Incluir no cálculo</label>
+                        </div>
                         <div class="form-group">
                             <label for="databaseType">Tipo de Banco de Dados:</label>
                             <select id="databaseType" class="form-control" onchange="calculateCost()">
@@ -173,88 +202,131 @@
     </div>
 
     <script>
-        function addAppService() {
-            const template = document.getElementById('appServiceTemplate');
-            const clone = template.cloneNode(true);
-            clone.style.display = 'block';
-            clone.removeAttribute('id'); // Remove the id attribute
-            document.getElementById('appServiceContainer').appendChild(clone);
-            calculateCost(); // Recalcula o custo total ao adicionar um novo serviço de aplicativo
-        }
+        
 
-        function removeAppService(button) {
-            button.closest('.card').remove();
-            calculateCost();
-        }
+   function addCard(containerId) {
+        debugger;
+        const container = document.getElementById(containerId);
+        const newCard = container.firstElementChild.cloneNode(true);
+        container.appendChild(newCard);
+        newCard.querySelectorAll('input').forEach(input => {
+            if (input.type === 'checkbox') {
+                input.checked = true;
+            } else {
+                input.value = input.defaultValue;
+            }
+        });
+        calculateCost(); // Calcular o custo inicialmente para o novo card
+   }
 
-        function calculateCost() {
-            // GPT Model Calculation
-            const gptModel = document.getElementById('gptModel').value.split(':');
-            const gptInputCost = parseFloat(gptModel[0]);
-            const gptOutputCost = parseFloat(gptModel[1]);
+   // Função para remover um card de serviço de aplicativo
+   function removeAppService(button) {
+       const card = button.closest('.card');
+       if (document.querySelectorAll('#appServiceContainer .card').length > 1) {
+           card.remove();
+           calculateCost();
+       } else {
+           alert("Você deve ter pelo menos um serviço de aplicativo.");
+       }
+   }
 
-            const inputTokens = parseFloat(document.getElementById('inputTokens').value);
-            const outputTokens = parseFloat(document.getElementById('outputTokens').value);
-            debugger;
+   function removeEmbedding(button) {
+       const card = button.closest('.card');
+       if (document.querySelectorAll('#modelEmbeddingContainer .card').length > 1) {
+           card.remove();
+           calculateCost();
+       } else {
+           alert("Você deve ter pelo menos um modelo de embedding.");
+       }
+   }
 
-            const totalGptCost = (gptInputCost * inputTokens) + (gptOutputCost * outputTokens);
-            document.getElementById('gptCost').innerText = `Custo GPT: $${totalGptCost.toFixed(2)} USD`;
 
-            // Embedding Model Calculation
-            const embeddingCost = parseFloat(document.getElementById('embeddingModel').value);
-            const embeddingTokens = parseFloat(document.getElementById('embeddingTokens').value);
+   function calculateCost() {
+       // GPT Model Calculation
+       let totalGptCost = 0;
+       if (document.getElementById('gptCheckbox').checked) {
+           const gptModel = document.getElementById('gptModel').value.split(':');
+           const gptInputCost = parseFloat(gptModel[0]);
+           const gptOutputCost = parseFloat(gptModel[1]);
 
-            const totalEmbeddingCost = embeddingCost * embeddingTokens;
-            document.getElementById('embeddingCost').innerText = `Custo Embedding: $${totalEmbeddingCost.toFixed(2)} USD`;
+           const inputTokens = parseFloat(document.getElementById('inputTokens').value);
+           const outputTokens = parseFloat(document.getElementById('outputTokens').value);
 
-            // App Service Cost Calculation
-            let totalServiceCost = 0;
-            const serviceCards = document.querySelectorAll('#appServiceContainer .card:not(#appServiceTemplate)');
-            serviceCards.forEach(card => {
-                const serviceTypeCost = parseFloat(card.querySelector('.appServiceType').value);
-                const hours = parseInt(card.querySelector('.hours').value);
-                const paymentPlanDiscount = parseFloat(card.querySelector('.paymentPlan').value);
-                const serviceCost = serviceTypeCost * hours * paymentPlanDiscount;
-                totalServiceCost += serviceCost;
-                card.querySelector('.serviceCost').innerText = `Custo Serviço de Aplicativo: $${serviceCost.toFixed(2)} USD`;
-            });
+           totalGptCost = (gptInputCost * inputTokens) + (gptOutputCost * outputTokens);
+       }
+       document.getElementById('gptCost').innerText = `Custo GPT: $${totalGptCost.toFixed(2)} USD`;
 
-            // Pinecone Platform Calculation
-            const pineconePlatform = document.getElementById('pineconePlatform').value.split(':');
-            const pineconeStorageCost = parseFloat(pineconePlatform[0]);
-            const pineconeReadCost = parseFloat(pineconePlatform[1]);
-            const pineconeWriteCost = parseFloat(pineconePlatform[2]);
+       // Embedding Model Calculation
+       let totalEmbeddingCost = 0;
+       const modelEmbeddingCards = document.querySelectorAll(".modelEmbeddingCard");
+       debugger;
+       modelEmbeddingCards.forEach(card =>{
+        if (card.querySelector('.form-check-input').checked) {
+           const embeddingCost = parseFloat(document.getElementById('embeddingModel').value);
+           const embeddingTokens = parseFloat(document.getElementById('embeddingTokens').value);
+           const cost = embeddingCost * embeddingTokens;
+           totalEmbeddingCost += cost;
+           card.querySelector('.embeddingCost').innerText = `Custo Embedding: $${totalEmbeddingCost.toFixed(2)} USD`;
 
-            const pineconeStorage = parseFloat(document.getElementById('pineconeStorage').value);
-            const pineconeReadUnits = parseFloat(document.getElementById('pineconeReadUnits').value);
-            const pineconeWriteUnits = parseFloat(document.getElementById('pineconeWriteUnits').value);
+       }
+       });
+       
 
-            const totalPineconeCost = (pineconeStorageCost * pineconeStorage) + (pineconeReadCost * pineconeReadUnits) + (pineconeWriteCost * pineconeWriteUnits);
-            document.getElementById('pineconeCost').innerText = `Custo Pinecone: $${totalPineconeCost.toFixed(2)} USD`;
+       // App Service Cost Calculation
+       let totalServiceCost = 0;
+       const serviceCards = document.querySelectorAll("#appServiceContainer");
+       serviceCards.forEach(card => {
+           if (card.querySelector('.form-check-input').checked) {
+               const serviceTypeCost = parseFloat(card.querySelector('.appServiceType').value);
+               const hours = parseInt(card.querySelector('.hours').value);
+               const paymentPlanDiscount = parseFloat(card.querySelector('.paymentPlan').value);
+               const serviceCost = serviceTypeCost * hours * paymentPlanDiscount;
+               totalServiceCost += serviceCost;
+               card.querySelector('.serviceCost').innerText = `Custo Serviço de Aplicativo: $${serviceCost.toFixed(2)} USD`;
+           }
+       });
 
-            // Database Calculation
-            const databaseTypeCost = parseFloat(document.getElementById('databaseType').value);
-            const databaseHours = parseFloat(document.getElementById('databaseHours').value);
-            const storageAmount = parseFloat(document.getElementById('storageAmount').value);
+       // Pinecone Platform Calculation
+       let totalPineconeCost = 0;
+       if (document.getElementById('pineconeCheckbox').checked) {
+           const pineconePlatform = document.getElementById('pineconePlatform').value.split(':');
+           const pineconeStorageCost = parseFloat(pineconePlatform[0]);
+           const pineconeReadCost = parseFloat(pineconePlatform[1]);
+           const pineconeWriteCost = parseFloat(pineconePlatform[2]);
 
-            let totalDatabaseCost = databaseTypeCost * databaseHours;
+           const pineconeStorage = parseFloat(document.getElementById('pineconeStorage').value);
+           const pineconeReadUnits = parseFloat(document.getElementById('pineconeReadUnits').value);
+           const pineconeWriteUnits = parseFloat(document.getElementById('pineconeWriteUnits').value);
 
-            // Storage Calculation
-            const extraStorage = storageAmount > 32 ? (storageAmount - 32) * 0.12 : 0;
-            totalDatabaseCost += extraStorage;
+           totalPineconeCost = (pineconeStorageCost * pineconeStorage) + (pineconeReadCost * pineconeReadUnits) + (pineconeWriteCost * pineconeWriteUnits);
+       }
+       document.getElementById('pineconeCost').innerText = `Custo Pinecone: $${totalPineconeCost.toFixed(2)} USD`;
 
-            document.getElementById('databaseCost').innerText = `Custo Banco de Dados: $${totalDatabaseCost.toFixed(2)} USD`;
+       // Database Calculation
+       let totalDatabaseCost = 0;
+       if (document.getElementById('databaseCheckbox').checked) {
+           const databaseTypeCost = parseFloat(document.getElementById('databaseType').value);
+           const databaseHours = parseFloat(document.getElementById('databaseHours').value);
+           const storageAmount = parseFloat(document.getElementById('storageAmount').value);
 
-            // Total Cost Calculation
-            const totalCost = totalGptCost + totalEmbeddingCost + totalServiceCost + totalPineconeCost + totalDatabaseCost;
-            document.getElementById('totalCost').innerText = `Custo Total: $${totalCost.toFixed(2)} USD`;
-        }
+           totalDatabaseCost = databaseTypeCost * databaseHours;
+
+           // Storage Calculation
+           const extraStorage = storageAmount > 32 ? (storageAmount - 32) * 0.12 : 0;
+           totalDatabaseCost += extraStorage;
+       }
+       document.getElementById('databaseCost').innerText = `Custo Banco de Dados: $${totalDatabaseCost.toFixed(2)} USD`;
+
+       // Total Cost Calculation
+       const totalCost = totalGptCost + totalEmbeddingCost + totalServiceCost + totalPineconeCost + totalDatabaseCost;
+       document.getElementById('totalCost').innerText = `Custo mensal: $${totalCost.toFixed(2)} USD`;
+   }
+   
 
         $(document).ready(function(){
             $('[data-toggle="tooltip"]').tooltip();   
             calculateCost(); // Initial calculation to set the total cost
         });
-
 
     </script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
