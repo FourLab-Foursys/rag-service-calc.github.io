@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estimativa de Custos</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <style>
         body { margin: 20px; }
         .card { margin-bottom: 20px; }
@@ -193,6 +195,7 @@
 
             const inputTokens = parseFloat(document.getElementById('inputTokens').value);
             const outputTokens = parseFloat(document.getElementById('outputTokens').value);
+            debugger;
 
             const totalGptCost = (gptInputCost * inputTokens) + (gptOutputCost * outputTokens);
             document.getElementById('gptCost').innerText = `Custo GPT: $${totalGptCost.toFixed(2)} USD`;
@@ -251,6 +254,8 @@
             $('[data-toggle="tooltip"]').tooltip();   
             calculateCost(); // Initial calculation to set the total cost
         });
+
+
     </script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
