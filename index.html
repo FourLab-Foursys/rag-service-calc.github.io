@@ -92,11 +92,11 @@
                             </div>
                             <div class="form-group">
                                 <label for="inputTokens">Tokens de Entrada (em milhões):</label>
-                                <input type="number" id="inputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                                <input type="number"  min="0" id="inputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
                             <div class="form-group">
                                 <label for="outputTokens">Tokens de Saída (em milhões):</label>
-                                <input type="number" id="outputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                                <input type="number" min="0" id="outputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
                             <div class="result gptCost" id="gpt-co"></div>
                         </div>
@@ -129,7 +129,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="embeddingTokens">Tokens de Embedding (em milhões):</label>
-                                <input type="number" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                                <input type="number" min="0" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
                             <div class="result embeddingCost"></div>
                         </div>
@@ -160,7 +160,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Total de Horas por Serviço de Aplicativo:</label>
-                                <input type="number" class="form-control hours" value="730" onchange="calculateCost()" onblur="validateInput(this)">
+                                <input type="number" min="0" class="form-control hours" value="730" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
                             <div class="form-group">
                                 <label>Plano de Pagamento:</label>
@@ -284,7 +284,8 @@
    function obterConfiguracao(tokens) {
         const configuracoes = [
                     { 
-                        "escala": "Pequena Escala (1-5 milhões de tokens/mês)", 
+                        "texto": "Pequena Escala (1-5 milhões de tokens/mês)", 
+                        "ESCALA":[1000000,5000000],
                         "configuracoes": [
                             {
                                 "GPU": "2 NVIDIA Tesla T4",
@@ -305,7 +306,9 @@
                         ]
                     },
                     { 
-                        "escala": "Média Escala (5-15 milhões de tokens/mês)", 
+                        "texto": "Média Escala (5-15 milhões de tokens/mês)", 
+                        "ESCALA":[5000000,15000000],
+
                         "configuracoes": [
                             {
                                 "GPU": "2-4 NVIDIA Tesla T4", 
@@ -334,7 +337,8 @@
                         ]
                     },
                     { 
-                        "escala": "Grande Escala (15-30 milhões de tokens/mês)", 
+                        "texto": "Grande Escala (15-30 milhões de tokens/mês)", 
+                        "ESCALA":[15000000,30000000],
                         "configuracoes": [
                             {
                                 "GPU": "4-6 NVIDIA Tesla T4",
@@ -363,7 +367,8 @@
                         ]
                     },
                     { 
-                        "escala": "Muito Grande Escala (30-50 milhões de tokens/mês)", 
+                        "texto": "Muito Grande Escala (30-50 milhões de tokens/mês)", 
+                        "ESCALA":[30000000,50000000],
                         "configuracoes": [
                             {
                                 "GPU": "6-8 NVIDIA Tesla T4",
@@ -392,7 +397,8 @@
                         ]
                     },
                     {
-                        "escala": "Extremamente Grande Escala (50-70 milhões de tokens/mês)",
+                        "texto": "Extremamente Grande Escala (50-70 milhões de tokens/mês)",
+                        "ESCALA":[50000000,70000000],
                         "configuracoes": [
                             {
                                 "GPU": "8-10 NVIDIA Tesla T4",
@@ -421,7 +427,8 @@
                         ]
                     },
                     {
-                        "escala": "Ultra Grande Escala (70-100 milhões de tokens/mês)",
+                        "texto": "Ultra Grande Escala (70-100 milhões de tokens/mês)",
+                        "ESCALA":[70000000,100000000],
                         "configuracoes": [
                             {
                                 "GPU": "10-12 NVIDIA Tesla T4",
@@ -621,7 +628,7 @@
         document.getElementById('total-cost-machine').innerText = `Custo mensal da máquina $${validateInputNumber(Math.round(custoTotalMaquina/periodo))} USD`
       
 
-        let comparacao =    `<h2>Custo total em ${periodo} meses</h2>  <span>${configs.escala}</span></p>`;
+        let comparacao =    `<h2>Custo total em ${periodo} meses</h2>  <span>${configs.texto} |  de ${Math.round(configs.ESCALA[0]/3000)} a ${Math.round(configs.ESCALA[1]/3000)} Pessoas X Mês </span></p>`;
         comparacao += `<p>Custo do Serviço: $${custoTotalServico.toFixed(2)}</p>`;
         comparacao += `  <p>
                 Custo da Máquina: $${custoTotalMaquina.toFixed(2)}
