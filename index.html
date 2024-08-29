@@ -613,7 +613,7 @@
        const configs = obterConfiguracao(totalTokens);
         mediaPrecoMaquina = calcularMediaPrecoMaquina(configs);
         mediaPrecoEnergia = calcularMediaCustoMensalEnergia(configs)
-        const custoMaquinaMensal = (mediaPrecoMaquina / periodo) + mediaPrecoEnergia;
+        const custoMaquinaMensal = (mediaPrecoMaquina / periodo) + mediaPrecoEnergia + totalServiceCost + totalPineconeCost + totalDatabaseCost;
         const custoTotalServico = custoServicoMensal * periodo;
         const custoTotalMaquina = custoMaquinaMensal * periodo;
         document.getElementById('totalCost').innerText = `Custo mensal do serviço: $${validateInputNumber(custoServicoMensal.toFixed(2))} USD`;
