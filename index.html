@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estimativa de Custos</title>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body { margin: 20px; }
         .card { margin-bottom: 20px; }
@@ -15,45 +14,92 @@
         .card-header h5, .card-header i { display: inline; }
         .card-header i { margin-left: 10px; }
         .total-cost { font-size: 1.5em; margin-bottom: 20px; color: #007bff; }
+        .total-cost-machine { font-size: 1.5em; margin-bottom: 20px; color: #007bff; }
         #cardsContainer { max-height: 70vh; overflow-y: auto; padding: 10px; border: 1px solid #ccc; }
+        .card-body .form-group label { font-weight: bold; }
+        .inputcontainer { margin-bottom: 20px; }
+        .invalid { border-color: red; }
+        .invalid::after {
+            content: 'Este campo não pode ser vazio.';
+            color: red;
+            display: block;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .info-icon {
+            cursor: pointer;
+            margin-left: 5px;
+            color: blue;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
         <h1 class="mb-4">Estimativa de Custos</h1>
-        <div class="result total-cost" id="totalCost">Custo mensal: $0.00 USD</div>
+        <div class="result total-cost" id="totalCost"></div>
+        <div class="result total-cost-machine" id="total-cost-machine">
+                <span id="total-cost-machine"></span>
+                <i class="fas fa-info-circle info-icon" id="info-icon"></i>
+                <span class="info-text" id="info-text"></span>
+        </div>
+        
+
+        <div class="inputcontainer">
+            <h5>Meses</h5>
+            <input type="number" min="1" max="120" value="60" id="monthCostNumber" class="form-control w-25" onchange="calculateCost()" oninput="checkValue(this)" onblur="validateInput(this)">
+        </div>
+        <div class="result" id="result"></div>
+
         <form id="costForm">
             <div id="cardsContainer">
                 <!-- GPT Model Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-brain"></i> Modelo GPT 
-                          <i class="fas fa-info-circle" data-toggle="tooltip" data-placement="top" title="Perguntas Simples: Aproximadamente 10-50 tokens por pergunta/resposta.&#10;Perguntas Moderadas: Aproximadamente 50-150 tokens por pergunta/resposta.&#10;Perguntas Complexas: Aproximadamente 150-500 tokens por pergunta/resposta."></i>
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                      <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="gptCheckbox" onchange="calculateCost()" checked>
-                        <label class="form-check-label" for="gptCheckbox">Incluir no cálculo</label>
-                      </div>
-                      <div class="form-group">
-                        <label for="gptModel">Modelo GPT:</label>
-                        <select id="gptModel" class="form-control" onchange="calculateCost()">
-                          <option value="2.5:0">gpt-4o-2024-08-06 ($2.50 / 1M input tokens)</option>
-                          <option value="1.25:0">gpt-4o-2024-08-06 ($1.25 / 1M input tokens)</option>
-                          <option value="0:10">gpt-4o-2024-08-06 ($10.00 / 1M output tokens)</option>
-                          <option value="0:5">gpt-4o-2024-08-06 ($5.00 / 1M output tokens)</option>
-                        </select>
-                      </div>
-                      <div class="form-group">
-                        <label for="inputTokens">Tokens de Entrada (em milhões):</label>
-                        <input type="number" id="inputTokens" class="form-control" value="1" onchange="calculateCost()">
-                      </div>
-                      <div class="form-group">
-                        <label for="outputTokens">Tokens de Saída (em milhões):</label>
-                        <input type="number" id="outputTokens" class="form-control" value="1" onchange="calculateCost()">
-                      </div>
-                      <div class="result" id="gptCost"></div>
+                <div id="llmContainer">
+                    <div class="card llmCard">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-brain"></i> Modelo LLM </h5>
+                            <div class="ml-auto d-flex">
+                                <button type="button" class="close mr-2" onclick="removeCard(this.closest('.card'))">&times;</button>
+                                <button type="button" class="add" onclick="addCard('llmContainer')">+</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="gptCheckbox" onchange="calculateCost()" checked>
+                                <label class="form-check-label" for="gptCheckbox">Incluir no cálculo</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="gptModel">Modelo:</label>
+                                <select id="gptModel" class="form-control" onchange="calculateCost()">
+                                    <option value="0.3:0.61">Azure Llama-3.1-8B instr. ($0.3 / 1M input tokens | $0.61 / 1M output tokens)</option>
+                                    <option value="0.59:0.79">Groq Llama 3 70B 8k ($0.59 / 1M input tokens | $0.79 / 1M output tokens)</option>
+                                    <option value="0.05:0.08">Groq Llama 3 8B 8k ($0.05 / 1M input tokens | $0.08 / 1M output tokens)</option>
+                                    <option value="0.24:0.24">Groq Mixtral 8x7B Instruct 32k ($0.24 / 1M input tokens | $0.24 / 1M output tokens)</option>
+                                    <option value="0.07:0.07">Groq Gemma 7B 8k Instruct ($0.07 / 1M input tokens | $0.07 / 1M output tokens)</option>
+                                    <option value="0.20:0.20">Groq Gemma 2 9B (8K Context Length) ($0.20 / 1M input tokens | $0.20 / 1M output tokens)</option>
+                                    <option value="3:15">Claude 3.5 Sonnet ($3 / 1M input tokens | $15 / 1M output tokens)</option>
+                                    <option value="15:75">Claude 3 Opus ($15 / 1M input tokens | $75 / 1M output tokens)</option>
+                                    <option value="0.25:1.25">Claude 3 Haiku ($0.25 / 1M input tokens | $1.25 / 1M output tokens)</option>
+                                    <option value="0.075:0.30">Google Gemini 1.5 flash até 128k tokens/requisição ($0.075 / 1M input tokens | $0.30 / 1M output tokens)</option>
+                                    <option value="0.15:0.60">Google Gemini 1.5 flash mais de 128k tokens/requisição ($0.15 / 1M input tokens | $0.60 / 1M output tokens)</option>
+                                    <option value="3.50:10.50">Google Gemini 1.5 pro até 128k tokens/requisição ($3.50 / 1M input tokens | $10.50 / 1M output tokens)</option>
+                                    <option value="7:21">Google Gemini 1.5 pro mais de 128k tokens/requisição ($7 / 1M input tokens | $21 / 1M output tokens)</option>
+                                    <option value="5.00:15.00">Openai gpt-4o ($5.00 / 1M input tokens | $15.00 / 1M output tokens)</option>
+                                    <option value="2.50:10.00">Openai gpt-4o-2024-08-06 ($2.50 / 1M input tokens | $10.00 output tokens)</option>
+                                    <option value="5.00:15.00">Openai gpt-4o-2024-05-13 ($5.00 / 1M input tokens | $15.00 / 1M output tokens)</option>
+                                </select>
+                                <div class="error-message">Este campo não pode ser vazio.</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputTokens">Tokens de Entrada (em milhões):</label>
+                                <input type="number" id="inputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="form-group">
+                                <label for="outputTokens">Tokens de Saída (em milhões):</label>
+                                <input type="number" id="outputTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="result gptCost" id="gpt-co"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -64,31 +110,28 @@
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-vector-square"></i> Modelo de Embedding</h5>
                             <div class="ml-auto d-flex">
-                                <button type="button" class="close mr-2" onclick="removeEmbedding(this)">&times;</button>
+                                <button type="button" class="close mr-2" onclick="removeCard(this.closest('.card'))">&times;</button>
                                 <button type="button" class="add" onclick="addCard('modelEmbeddingContainer')">+</button>
                             </div>
                         </div>
                         <div class="card-body">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input"  onchange="calculateCost()" checked>
-                                <label class="form-check-label" >Incluir no cálculo</label>
+                                <input type="checkbox" class="form-check-input" onchange="calculateCost()" checked>
+                                <label class="form-check-label">Incluir no cálculo</label>
                             </div>
                             <div class="form-group">
                                 <label for="embeddingModel">Modelo de Embedding:</label>
                                 <select id="embeddingModel" class="form-control" onchange="calculateCost()">
-                                    <option value="0.02">text-embedding-3-small ($0.020 / 1M tokens)</option>
-                                    <option value="0.01">text-embedding-3-small ($0.010 / 1M tokens com Batch API)</option>
+                                    <option value="0.020">text-embedding-3-small ($0.020 / 1M tokens)</option>
                                     <option value="0.13">text-embedding-3-large ($0.130 / 1M tokens)</option>
-                                    <option value="0.065">text-embedding-3-large ($0.065 / 1M tokens com Batch API)</option>
                                     <option value="0.1">ada v2 ($0.100 / 1M tokens)</option>
-                                    <option value="0.05">ada v2 ($0.050 / 1M tokens com Batch API)</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="embeddingTokens">Tokens de Embedding (em milhões):</label>
-                                <input type="number" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()">
+                                <input type="number" id="embeddingTokens" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
-                            <div class="result embeddingCost" ></div>
+                            <div class="result embeddingCost"></div>
                         </div>
                     </div>
                 </div>
@@ -96,15 +139,14 @@
                 <!-- App Service Container -->
                 <div id="appServiceContainer">
                     <!-- Default App Service Card -->
-                    <div class="card">
+                    <div class="card appServiceCard">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <h5><i class="fas fa-server"></i> Serviço de Aplicativo</h5>
                             <div class="ml-auto d-flex">
-                                <button type="button" class="close mr-2" onclick="removeAppService(this)">&times;</button>
+                                <button type="button" class="close mr-2" onclick="removeCard(this.closest('.card'))">&times;</button>
                                 <button type="button" class="add" onclick="addCard('appServiceContainer')">+</button>
                             </div>
                         </div>
-                        
                         <div class="card-body">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" onchange="calculateCost()" checked>
@@ -118,7 +160,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Total de Horas por Serviço de Aplicativo:</label>
-                                <input type="number" class="form-control hours" value="730" onchange="calculateCost()">
+                                <input type="number" class="form-control hours" value="730" onchange="calculateCost()" onblur="validateInput(this)">
                             </div>
                             <div class="form-group">
                                 <label>Plano de Pagamento:</label>
@@ -134,78 +176,88 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Pinecone Platform Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-database"></i> Plataforma Pinecone</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="pineconeCheckbox" onchange="calculateCost()" checked>
-                            <label class="form-check-label" for="pineconeCheckbox">Incluir no cálculo</label>
+                <div id="pineconeContainer">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-database"></i> Plataforma Pinecone</h5>
+                            <button type="button" class="close mr-2" onclick="removeCard(this.closest('.card'))">&times;</button>
                         </div>
-                        <div class="form-group">
-                            <label for="pineconePlatform">Plataforma Pinecone:</label>
-                            <select id="pineconePlatform" class="form-control" onchange="calculateCost()">
-                                <option value="0.00045:8.25:2.00">AWS us-west-2 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
-                                <option value="0.00045:8.25:2.00">AWS us-east-1 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
-                                <option value="0.00045:9.25:2.25">AWS eu-west-1 ($0.00045 /GB/Hour, $9.25 /1M RU, $2.25 /1M WU)</option>
-                                <option value="0.00045:8.25:2.00">GCP us-central1 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
-                                <option value="0.00045:8.25:2.00">Azure eastus2 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
-                            </select>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="pineconeCheckbox" onchange="calculateCost()" checked>
+                                <label class="form-check-label" for="pineconeCheckbox">Incluir no cálculo</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="pineconePlatform">Plataforma Pinecone:</label>
+                                <select id="pineconePlatform" class="form-control" onchange="calculateCost()">
+                                    <option value="0.00045:8.25:2.00">AWS us-west-2 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
+                                    <option value="0.00045:8.25:2.00">AWS us-east-1 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
+                                    <option value="0.00045:9.25:2.25">AWS eu-west-1 ($0.00045 /GB/Hour, $9.25 /1M RU, $2.25 /1M WU)</option>
+                                    <option value="0.00045:8.25:2.00">GCP us-central1 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
+                                    <option value="0.00045:8.25:2.00">Azure eastus2 ($0.00045 /GB/Hour, $8.25 /1M RU, $2.00 /1M WU)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pineconeStorage">Armazenamento do Pinecone (em GB):</label>
+                                <input type="number" id="pineconeStorage" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="form-group">
+                                <label for="pineconeReadUnits">Unidades de Leitura do Pinecone (em milhões):</label>
+                                <input type="number" id="pineconeReadUnits" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="form-group">
+                                <label for="pineconeWriteUnits">Unidades de Escrita do Pinecone (em milhões):</label>
+                                <input type="number" id="pineconeWriteUnits" class="form-control" value="1" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="result" id="pineconeCost"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="pineconeStorage">Armazenamento do Pinecone (em GB):</label>
-                            <input type="number" id="pineconeStorage" class="form-control" value="1" onchange="calculateCost()">
-                        </div>
-                        <div class="form-group">
-                            <label for="pineconeReadUnits">Unidades de Leitura do Pinecone (em milhões):</label>
-                            <input type="number" id="pineconeReadUnits" class="form-control" value="1" onchange="calculateCost()">
-                        </div>
-                        <div class="form-group">
-                            <label for="pineconeWriteUnits">Unidades de Escrita do Pinecone (em milhões):</label>
-                            <input type="number" id="pineconeWriteUnits" class="form-control" value="1" onchange="calculateCost()">
-                        </div>
-                        <div class="result" id="pineconeCost"></div>
                     </div>
                 </div>
 
                 <!-- Database Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-database"></i> Banco de Dados</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="databaseCheckbox" onchange="calculateCost()" checked>
-                            <label class="form-check-label" for="databaseCheckbox">Incluir no cálculo</label>
+                <div id="databaseContainer">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-database"></i> Banco de Dados</h5>
+                            <button type="button" class="close mr-2" onclick="removeCard(this.closest('.card'))">&times;</button>
                         </div>
-                        <div class="form-group">
-                            <label for="databaseType">Tipo de Banco de Dados:</label>
-                            <select id="databaseType" class="form-control" onchange="calculateCost()">
-                                <option value="0.02">Azure Database for MySQL flexible server, East US / Flexible Server Burstable / B1MS 1 vCore, $0.02/hour</option>
-                            </select>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="databaseCheckbox" onchange="calculateCost()" checked>
+                                <label class="form-check-label" for="databaseCheckbox">Incluir no cálculo</label>
+                            </div>
+                            <div class="form-group">
+                                <label for="databaseType">Tipo de Banco de Dados:</label>
+                                <select id="databaseType" class="form-control" onchange="calculateCost()">
+                                    <option value="0.02">Azure Database for MySQL flexible server, East US / Flexible Server Burstable / B1MS 1 vCore, $0.02/hour</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="databaseHours">Total de Horas:</label>
+                                <input type="number" id="databaseHours" class="form-control" value="750" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="form-group">
+                                <label for="storageAmount">Storage (USD 2.30/month, Free upto 32 GB, USD 0.12 per GiB):</label>
+                                <input type="number" id="storageAmount" class="form-control" value="32" onchange="calculateCost()" onblur="validateInput(this)">
+                            </div>
+                            <div class="result" id="databaseCost"></div>
                         </div>
-                        <div class="form-group">
-                            <label for="databaseHours">Total de Horas:</label>
-                            <input type="number" id="databaseHours" class="form-control" value="750" onchange="calculateCost()">
-                        </div>
-                        <div class="form-group">
-                            <label for="storageAmount">Storage (USD 2.30/month, Free upto 32 GB, USD 0.12 per GiB):</label>
-                            <input type="number" id="storageAmount" class="form-control" value="20" onchange="calculateCost()">
-                        </div>
-                        <div class="result" id="databaseCost"></div>
                     </div>
                 </div>
             </div>
         </form>
     </div>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        
-
-   function addCard(containerId) {
-        debugger;
+        function addCard(containerId) {
         const container = document.getElementById(containerId);
         const newCard = container.firstElementChild.cloneNode(true);
         container.appendChild(newCard);
@@ -220,69 +272,307 @@
    }
 
    // Função para remover um card de serviço de aplicativo
-   function removeAppService(button) {
-       const card = button.closest('.card');
-       if (document.querySelectorAll('#appServiceContainer .card').length > 1) {
+   function removeCard(card) {
+       if (document.getElementsByClassName(card.className).length > 1) {
            card.remove();
            calculateCost();
        } else {
-           alert("Você deve ter pelo menos um serviço de aplicativo.");
+           alert("Você deve ter pelo menos um card de cada categoria.");
        }
    }
 
-   function removeEmbedding(button) {
-       const card = button.closest('.card');
-       if (document.querySelectorAll('#modelEmbeddingContainer .card').length > 1) {
-           card.remove();
-           calculateCost();
-       } else {
-           alert("Você deve ter pelo menos um modelo de embedding.");
-       }
-   }
+   function obterConfiguracao(tokens) {
+        const configuracoes = [
+                    { 
+                        "escala": "Pequena Escala (1-5 milhões de tokens/mês)", 
+                        "configuracoes": [
+                            {
+                                "GPU": "2 NVIDIA Tesla T4",
+                                "CPU": "Intel Xeon Silver 4214", 
+                                "RAM": "128 GB", 
+                                "Armazenamento": "1 TB SSD",
+                                "Custo": [3100],
+                                "CustoMensalEnergia": 22.88
+                            },
+                            {
+                                "GPU": "1 NVIDIA RTX 3090",
+                                "CPU": "AMD Ryzen 9 5950X",
+                                "RAM": "64 GB", 
+                                "Armazenamento": "1 TB SSD",
+                                "Custo": [4190],
+                                "CustoMensalEnergia": 41.17
+                            }
+                        ]
+                    },
+                    { 
+                        "escala": "Média Escala (5-15 milhões de tokens/mês)", 
+                        "configuracoes": [
+                            {
+                                "GPU": "2-4 NVIDIA Tesla T4", 
+                                "CPU": "Intel Xeon Silver 4214", 
+                                "RAM": "128 GB", 
+                                "Armazenamento": "1 TB SSD", 
+                                "Custo": [5600],
+                                "CustoMensalEnergia": 28.98
+                            },
+                            {
+                                "GPU": "1 NVIDIA A100", 
+                                "CPU": "Intel Xeon Gold 6230", 
+                                "RAM": "256 GB", 
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [7500],
+                                "CustoMensalEnergia": 39.38
+                            },
+                            {
+                                "GPU": "3 NVIDIA RTX 3090", 
+                                "CPU": "AMD Ryzen 9 5950X", 
+                                "RAM": "128 GB", 
+                                "Armazenamento": "1 TB SSD",
+                                "Custo": [11040],
+                                "CustoMensalEnergia": 103.28
+                            }
+                        ]
+                    },
+                    { 
+                        "escala": "Grande Escala (15-30 milhões de tokens/mês)", 
+                        "configuracoes": [
+                            {
+                                "GPU": "4-6 NVIDIA Tesla T4",
+                                "CPU": "Intel Xeon Silver 4214",
+                                "RAM": "128-256 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [12000,18000],
+                                "CustoMensalEnergia": 42.86
+                            },
+                            {
+                                "GPU": "2 NVIDIA A100",
+                                "CPU": "Intel Xeon Gold 6230",
+                                "RAM": "512 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [32400],
+                                "CustoMensalEnergia": 67.62
+                            },
+                            {
+                                "GPU": "3-5 NVIDIA RTX 3090",
+                                "CPU": "AMD Ryzen 9 5950X",
+                                "RAM": "128-256 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [6550, 10000],
+                                "CustoMensalEnergia": 135.40
+                            }
+                        ]
+                    },
+                    { 
+                        "escala": "Muito Grande Escala (30-50 milhões de tokens/mês)", 
+                        "configuracoes": [
+                            {
+                                "GPU": "6-8 NVIDIA Tesla T4",
+                                "CPU": "Intel Xeon Silver 4214",
+                                "RAM": "256 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [18000, 24000],
+                                "CustoMensalEnergia": 56.66
+                            },
+                            {
+                                "GPU": "3 NVIDIA A100",
+                                "CPU": "Intel Xeon Gold 6230",
+                                "RAM": "512 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [48600],
+                                "CustoMensalEnergia": 89.31
+                            },
+                            {
+                                "GPU": "5-7 NVIDIA RTX 3090",
+                                "CPU": "AMD Ryzen 9 5950X",
+                                "RAM": "256 GB",
+                                "Armazenamento": "2 TB SSD",
+                                "Custo": [10000,13000],
+                                "CustoMensalEnergia": 197.49
+                            }
+                        ]
+                    },
+                    {
+                        "escala": "Extremamente Grande Escala (50-70 milhões de tokens/mês)",
+                        "configuracoes": [
+                            {
+                                "GPU": "8-10 NVIDIA Tesla T4",
+                                "CPU": "Intel Xeon Silver 4214",
+                                "RAM": "256-512 GB",
+                                "Armazenamento": "2-4 TB SSD",
+                                "Custo": [24000, 30000],
+                                "CustoMensalEnergia": 72.25
+                            },
+                            {
+                                "GPU": "4 NVIDIA A100",
+                                "CPU": "Intel Xeon Gold 6230",
+                                "RAM": "512 GB",
+                                "Armazenamento": "4 TB SSD",
+                                "Custo": [64800],
+                                "CustoMensalEnergia": 111.50
+                            },
+                            {
+                                "GPU": "7-9 NVIDIA RTX 3090",
+                                "CPU": "AMD Ryzen 9 5950X",
+                                "RAM": "256-512 GB",
+                                "Armazenamento": "4 TB SSD",
+                                "Custo": [13000, 18000],
+                                "CustoMensalEnergia": 261.64
+                            }
+                        ]
+                    },
+                    {
+                        "escala": "Ultra Grande Escala (70-100 milhões de tokens/mês)",
+                        "configuracoes": [
+                            {
+                                "GPU": "10-12 NVIDIA Tesla T4",
+                                "CPU": "Intel Xeon Silver 4214",
+                                "RAM": "512-1024 GB",
+                                "Armazenamento": "4-6 TB SSD",
+                                "Custo": [30000, 36000],
+                                "CustoMensalEnergia": 94.74
+                            },
+                            {
+                                "GPU": "5 NVIDIA A100",
+                                "CPU": "Intel Xeon Gold 6230",
+                                "RAM": "1024 GB",
+                                "Armazenamento": "6 TB SSD",
+                                "Custo": [81000],
+                                "CustoMensalEnergia": 146.43
+                            },
+                            {
+                                "GPU": "9-12 NVIDIA RTX 3090",
+                                "CPU": "AMD Ryzen 9 5950X",
+                                "RAM": "512-1024 GB",
+                                "Armazenamento": "6 TB SSD",
+                                "Custo": [18000, 25000],
+                                "CustoMensalEnergia": 347.54
+                            }
+                        ]
+                    }
+                ]
+                ;
 
+        if (tokens <= 5) {
+            return configuracoes[0];
+        } else if (tokens <= 15) {
+            return configuracoes[1];
+        } else if (tokens <= 30) {
+            return configuracoes[2];
+        } else if (tokens <= 50) {
+            return configuracoes[3];
+        } else if (tokens <= 70) {
+            return configuracoes[4];
+        } else if (tokens >= 71) {
+            return configuracoes[5];
+        }
+         else {
+            return "Número de tokens fora do intervalo especificado.";
+        }
+    }
+
+    function calcularMediaCustoMensalEnergia(lista) {
+    let totalCustoMensalEnergia = 0;
+    let contadorConfiguracoes = lista.configuracoes.length;
+
+    lista.configuracoes.forEach(configuracao => {
+        totalCustoMensalEnergia += configuracao.CustoMensalEnergia;
+    });
+
+    return contadorConfiguracoes > 0 ? totalCustoMensalEnergia / contadorConfiguracoes : 0;
+}
+
+
+    function calcularMediaPrecoMaquina(lista) {
+        let totalMediaPrecos = 0;
+        let contadorConfiguracoes = lista.configuracoes.length;
+
+        lista.configuracoes.forEach(configuracao => {
+            let somaCusto = 0;
+            let contadorPrecos = configuracao.Custo.length;
+
+            configuracao.Custo.forEach(preco => {
+                somaCusto += preco;
+            });
+
+            let mediaCusto = somaCusto / contadorPrecos;
+            totalMediaPrecos += mediaCusto;
+        });
+
+        return contadorConfiguracoes > 0 ? totalMediaPrecos / contadorConfiguracoes : 0;
+    }
+
+    function validateInputNumber(number){
+        return isNaN(number)? 0 : number;
+    }
+
+    function formatarConfiguracoes(listaDeMaquinas) {
+    let textoFormatado = "";
+    
+        textoFormatado += ``;
+        Array.from(listaDeMaquinas.configuracoes).forEach(config => {
+            textoFormatado += "    Configuração:\n";
+            textoFormatado += `        GPU: ${config.GPU}\n`;
+            debugger;
+            textoFormatado += `        CPU: ${config.CPU}\n`;
+            textoFormatado += `        RAM: ${config.RAM}\n`;
+            textoFormatado += `        Armazenamento: ${config.Armazenamento}\n`;
+            let custo = config.Custo.join(", ");
+            textoFormatado += `        Custo: ${custo}\n`;
+            textoFormatado += `        Custo Mensal de Energia: ${config.CustoMensalEnergia}\n`;
+        });
+        textoFormatado += "\n";
+    debugger;
+    return textoFormatado;
+}
 
    function calculateCost() {
+
+    const periodo = document.getElementById("monthCostNumber").value;
+    let totalTokens = 0;
+
        // GPT Model Calculation
        let totalGptCost = 0;
-       if (document.getElementById('gptCheckbox').checked) {
-           const gptModel = document.getElementById('gptModel').value.split(':');
-           const gptInputCost = parseFloat(gptModel[0]);
-           const gptOutputCost = parseFloat(gptModel[1]);
+       const llmCards = document.getElementsByClassName("llmCard");
+       Array.from(llmCards).forEach(card =>{
+            if (card.querySelector('.form-check-input').checked) {
+                const gptModel = card.querySelector('#gptModel').value.split(':');
+                const gptInputCost = parseFloat(gptModel[0]);
+                const gptOutputCost = parseFloat(gptModel[1]);
+                const inputTokens = parseFloat( card.querySelector('#inputTokens').value);
+                const outputTokens = parseFloat( card.querySelector('#outputTokens').value);
+                totalGptCost += (gptInputCost * inputTokens) + (gptOutputCost * outputTokens);
+                totalTokens += (inputTokens+outputTokens);
+                card.querySelector('.gptCost').innerText = `Custo GPT: $${validateInputNumber(totalGptCost.toFixed(2))} USD`;
 
-           const inputTokens = parseFloat(document.getElementById('inputTokens').value);
-           const outputTokens = parseFloat(document.getElementById('outputTokens').value);
-
-           totalGptCost = (gptInputCost * inputTokens) + (gptOutputCost * outputTokens);
-       }
-       document.getElementById('gptCost').innerText = `Custo GPT: $${totalGptCost.toFixed(2)} USD`;
-
+            }''
+        });
+       
        // Embedding Model Calculation
        let totalEmbeddingCost = 0;
-       const modelEmbeddingCards = document.querySelectorAll(".modelEmbeddingCard");
-       debugger;
-       modelEmbeddingCards.forEach(card =>{
-        if (card.querySelector('.form-check-input').checked) {
-           const embeddingCost = parseFloat(document.getElementById('embeddingModel').value);
-           const embeddingTokens = parseFloat(document.getElementById('embeddingTokens').value);
-           const cost = embeddingCost * embeddingTokens;
-           totalEmbeddingCost += cost;
-           card.querySelector('.embeddingCost').innerText = `Custo Embedding: $${totalEmbeddingCost.toFixed(2)} USD`;
-
-       }
+       const modelEmbeddingCards = document.getElementsByClassName("modelEmbeddingCard");
+       Array.from(modelEmbeddingCards).forEach(card =>{
+            if (card.querySelector('.form-check-input').checked) {
+                const embeddingCost = card.querySelector('#embeddingModel').value;
+                const embeddingTokens = card.querySelector('#embeddingTokens').value;
+                totalTokens += parseInt(embeddingTokens);
+                const cost = embeddingCost * embeddingTokens;
+                totalEmbeddingCost += cost;
+                card.querySelector('.embeddingCost').innerText = `Custo Embedding: $${validateInputNumber(totalEmbeddingCost.toFixed(2))} USD`;
+            }
        });
        
 
        // App Service Cost Calculation
        let totalServiceCost = 0;
-       const serviceCards = document.querySelectorAll("#appServiceContainer");
-       serviceCards.forEach(card => {
+       const serviceCards = document.getElementsByClassName("appServiceCard");
+       Array.from(serviceCards).forEach(card => {
            if (card.querySelector('.form-check-input').checked) {
                const serviceTypeCost = parseFloat(card.querySelector('.appServiceType').value);
                const hours = parseInt(card.querySelector('.hours').value);
                const paymentPlanDiscount = parseFloat(card.querySelector('.paymentPlan').value);
                const serviceCost = serviceTypeCost * hours * paymentPlanDiscount;
                totalServiceCost += serviceCost;
-               card.querySelector('.serviceCost').innerText = `Custo Serviço de Aplicativo: $${serviceCost.toFixed(2)} USD`;
+               card.querySelector('.serviceCost').innerText = `Custo Serviço de Aplicativo: $${validateInputNumber(serviceCost.toFixed(2))} USD`;
            }
        });
 
@@ -300,7 +590,7 @@
 
            totalPineconeCost = (pineconeStorageCost * pineconeStorage) + (pineconeReadCost * pineconeReadUnits) + (pineconeWriteCost * pineconeWriteUnits);
        }
-       document.getElementById('pineconeCost').innerText = `Custo Pinecone: $${totalPineconeCost.toFixed(2)} USD`;
+       document.getElementById('pineconeCost').innerText = `Custo Pinecone: $${validateInputNumber(totalPineconeCost.toFixed(2))} USD`;
 
        // Database Calculation
        let totalDatabaseCost = 0;
@@ -315,11 +605,33 @@
            const extraStorage = storageAmount > 32 ? (storageAmount - 32) * 0.12 : 0;
            totalDatabaseCost += extraStorage;
        }
-       document.getElementById('databaseCost').innerText = `Custo Banco de Dados: $${totalDatabaseCost.toFixed(2)} USD`;
+
+       document.getElementById('databaseCost').innerText = `Custo Banco de Dados: $${validateInputNumber(totalDatabaseCost.toFixed(2))} USD`;
 
        // Total Cost Calculation
-       const totalCost = totalGptCost + totalEmbeddingCost + totalServiceCost + totalPineconeCost + totalDatabaseCost;
-       document.getElementById('totalCost').innerText = `Custo mensal: $${totalCost.toFixed(2)} USD`;
+       const custoServicoMensal = totalGptCost + totalEmbeddingCost + totalServiceCost + totalPineconeCost + totalDatabaseCost;
+       const configs = obterConfiguracao(totalTokens);
+        mediaPrecoMaquina = calcularMediaPrecoMaquina(configs);
+        mediaPrecoEnergia = calcularMediaCustoMensalEnergia(configs)
+        const custoMaquinaMensal = (mediaPrecoMaquina / periodo) + mediaPrecoEnergia;
+        const custoTotalServico = custoServicoMensal * periodo;
+        const custoTotalMaquina = custoMaquinaMensal * periodo;
+        document.getElementById('totalCost').innerText = `Custo mensal do serviço: $${validateInputNumber(custoServicoMensal.toFixed(2))} USD`;
+
+        document.getElementById('total-cost-machine').innerText = `Custo mensal da máquina $${validateInputNumber(Math.round(custoTotalMaquina/periodo))} USD`
+      
+
+        let comparacao =    `<h2>Custo total em ${periodo} meses</h2>  <span>${configs.escala}</span></p>`;
+        comparacao += `<p>Custo do Serviço: $${custoTotalServico.toFixed(2)}</p>`;
+        comparacao += `  <p>
+                Custo da Máquina: $${custoTotalMaquina.toFixed(2)}
+                <span class="info-icon" title="${formatarConfiguracoes(configs)}">
+                &#9432; <!-- Este é o código HTML para o ícone de informação -->
+                </span>
+            </p>` ;
+ 
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = comparacao;
    }
    
 
@@ -328,10 +640,22 @@
             calculateCost(); // Initial calculation to set the total cost
         });
 
+        function checkValue(input) {
+            if (input.value < input.min) {
+                input.value = input.min;
+            } else if (input.value > input.max) {
+                input.value = input.max;
+            }
+        }
+
+        function validateInput(input) {
+            const errorMessage = input.nextElementSibling;
+            if (input.value.trim() === "") {
+                input.classList.add("invalid");
+            } else {
+                input.classList.remove("invalid");
+            }
+        }
     </script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
 </body>
 </html>
